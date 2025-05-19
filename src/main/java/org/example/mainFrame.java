@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class mainFrame extends JFrame {
+    Attendance attendanceFrame = new Attendance();
     JTextField idTextField, nameTextField, positionTextField, salaryTextField;
     JLabel idLabel, nameLabel, positionLabel, salaryLabel;
     JButton addButton, updateButton, deleteButton, computeButton;
@@ -17,7 +18,8 @@ public class mainFrame extends JFrame {
         this.setTitle("Payroll System");
         this.setLayout(new BorderLayout());
 
-        JPanel formPanel = new JPanel(new GridLayout(5,2,5,5));
+
+        JPanel formPanel = new JPanel(new GridLayout(4,2,5,5));
         formPanel.setBorder(BorderFactory.createTitledBorder("Add Employee"));
         JPanel buttonPanel = new JPanel(new GridLayout(1,3,5,5));
         buttonPanel.setBorder(BorderFactory.createTitledBorder("Options"));
@@ -30,7 +32,7 @@ public class mainFrame extends JFrame {
         positionTextField = new JTextField();
         salaryLabel = new JLabel("Salary");
         salaryTextField = new JTextField();
-        computeButton = new JButton("Compute Payroll");
+//        computeButton = new JButton("Compute Payroll");
         addButton = new JButton("Add Employee");
         updateButton = new JButton("Update Employee");
         deleteButton = new JButton("Delete Employee");
@@ -43,7 +45,7 @@ public class mainFrame extends JFrame {
         formPanel.add(positionTextField);
         formPanel.add(salaryLabel);
         formPanel.add(salaryTextField);
-        formPanel.add(computeButton);
+//        formPanel.add(computeButton);
         buttonPanel.add(addButton);
         buttonPanel.add(updateButton);
         buttonPanel.add(deleteButton);
@@ -56,11 +58,12 @@ public class mainFrame extends JFrame {
         add(new JScrollPane(table), BorderLayout.CENTER);
 
         addButton.addActionListener(e -> addEmployee());
-        computeButton.addActionListener(e -> computePayroll());
+//        computeButton.addActionListener(e -> computePayroll());
 
         this.setSize(500, 500);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setVisible(true);
+        attendanceFrame.setVisible(true);
     }
     public void addEmployee() {
         String id = idTextField.getText();
@@ -71,6 +74,8 @@ public class mainFrame extends JFrame {
         Employee employee = new Employee(id, name, position, salary);
         employeesList.add(employee);
         tableModel.addRow(new Object[]{id, name, position, salary});
+
+        attendanceFrame.addEmployee(id,name);
 
         idTextField.setText("");
         nameTextField.setText("");
