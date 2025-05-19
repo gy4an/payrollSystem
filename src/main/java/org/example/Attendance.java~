@@ -113,10 +113,10 @@ public class Attendance extends JFrame {
 
             if (selectedRow != -1 && attendanceModel.getValueAt(selectedRow, 0).equals(name) && attendanceModel
                     .getValueAt(selectedRow, 1).equals(date)) {
+                attendanceModel.setValueAt(time, selectedRow, 3);
                 if (timeField.getText().isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Please enter a time.");
                 } else {
-                    attendanceModel.setValueAt(time, selectedRow, 3);
                     JOptionPane.showMessageDialog(this, name + " checked out at " + time);
                 }
                 checkInOutButton.setText("Check In");
