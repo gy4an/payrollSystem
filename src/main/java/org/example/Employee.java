@@ -1,5 +1,9 @@
 package org.example;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 public class Employee {
     private String id;
     private String name;
@@ -22,5 +26,6 @@ public class Employee {
     public void setName(String name) { this.name = name; }
     public void setPosition(String position) { this.position = position; }
     public void setBasicSalary(double basicSalary) { this.basicSalary = basicSalary; }
+
 
 }

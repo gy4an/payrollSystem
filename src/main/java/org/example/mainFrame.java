@@ -14,6 +14,8 @@ public class mainFrame extends JFrame {
     JTable table;
     DefaultTableModel tableModel;
     List<Employee> employeesList = new ArrayList<>();
+
+
     public mainFrame() {
         this.setTitle("Payroll System");
         this.setLayout(new BorderLayout());
@@ -37,6 +39,9 @@ public class mainFrame extends JFrame {
         updateButton = new JButton("Update Employee");
         deleteButton = new JButton("Delete Employee");
 
+
+
+
         formPanel.add(idLabel);
         formPanel.add(idTextField);
         formPanel.add(nameLabel);
@@ -50,6 +55,7 @@ public class mainFrame extends JFrame {
         buttonPanel.add(updateButton);
         buttonPanel.add(deleteButton);
 
+
         add(formPanel, BorderLayout.NORTH);
         add(buttonPanel, BorderLayout.SOUTH);
 
@@ -59,6 +65,10 @@ public class mainFrame extends JFrame {
 
         addButton.addActionListener(e -> addEmployee());
 //        computeButton.addActionListener(e -> computePayroll());
+        JButton payrollSummaryButton = new JButton("View Payroll Summary");
+        buttonPanel.add(payrollSummaryButton);
+
+        payrollSummaryButton.addActionListener(e -> showPayrollSummary());
 
         this.setSize(500, 500);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -101,5 +111,28 @@ public class mainFrame extends JFrame {
                 basic, sss, philHealth, pagibig, incomeTax, netPay);
 
         JOptionPane.showMessageDialog(this, message, "Payroll Computation", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public void showPayrollSummary() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Select an employee to view payroll summary.");
+            return;
+        }
+
+        String id = table.getValueAt(selectedRow, 0).toString();
+        String name = table.getValueAt(selectedRow, 1).toString();
+        double salary = Double.parseDouble(table.getValueAt(selectedRow, 3).toString());
+
+        // Find the employee object to get the correct basic salary (if needed later)
+        Employee selectedEmployee = null;
+        for (Employee emp : employeesList) {
+            if (emp.getId().equals(id)) {
+                selectedEmployee = emp;
+                break;
+            }
+        }
+
+        new PayrollSummaryFrame(name, id, salary, attendanceFrame.getAttendanceDataById(id), employeesList); // Pass employeesList
     }
 }
