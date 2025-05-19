@@ -120,13 +120,19 @@ public class mainFrame extends JFrame {
             return;
         }
 
+        String id = table.getValueAt(selectedRow, 0).toString();
         String name = table.getValueAt(selectedRow, 1).toString();
         double salary = Double.parseDouble(table.getValueAt(selectedRow, 3).toString());
 
-        // Simulate total days and hours - you can link this to attendance data later
-        int totalDays = 22; // example
-        double totalHours = totalDays * 8; // 8 hours per day
+        // Find the employee object to get the correct basic salary (if needed later)
+        Employee selectedEmployee = null;
+        for (Employee emp : employeesList) {
+            if (emp.getId().equals(id)) {
+                selectedEmployee = emp;
+                break;
+            }
+        }
 
-        new PayrollSummaryFrame(name, salary, totalDays, totalHours);
+        new PayrollSummaryFrame(name, id, salary, attendanceFrame.getAttendanceDataById(id), employeesList); // Pass employeesList
     }
 }

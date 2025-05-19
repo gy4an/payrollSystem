@@ -1,47 +1,96 @@
 package org.example;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class PayrollSummaryFrame extends JFrame {
 
-    public PayrollSummaryFrame(String employeeName, double basicSalary, int totalDays, double totalHours) {
+    public PayrollSummaryFrame(String employeeName, String employeeId, double basicSalary, List<AttendanceRecord> attendanceRecords, List<Employee> allEmployees) {
         setTitle("Payroll Summary");
-        setSize(500, 400);
-        setLayout(new GridLayout(10, 2, 10, 10));
+        setSize(600, 400);
+        setLocationRelativeTo(null);
 
-        // Fixed deductions (can be made dynamic)
+        // Calculate total days worked (days with check-in and check-out)
+        int totalDays = 0;
+        double totalHours = 0.0;
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+
+        for (AttendanceRecord record : attendanceRecords) {
+            if (record.getTimeIn() != null && !record.getTimeIn().isEmpty()
+                    && record.getTimeOut() != null && !record.getTimeOut().isEmpty()) {
+                totalDays++;
+
+                try {
+                    long diffInMillis = sdf.parse(record.getTimeOut()).getTime() - sdf.parse(record.getTimeIn()).getTime();
+                    double hours = TimeUnit.MILLISECONDS.toMinutes(diffInMillis) / 60.0;
+                    if (hours < 0) {
+                        hours = 0;
+                    }
+                    totalHours += hours;
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        // **Improved Gross Pay Calculation:**
+        // Assuming basicSalary is a monthly salary and typically there are around 22 working days.
+        // You might need to adjust this based on your specific payroll rules.
+        double dailyRate = basicSalary / 22.0; // Approximate daily rate
+        double grossPayBasedOnDays = dailyRate * totalDays;
+
+        // You could also consider hourly rate if that's more relevant
+        double hourlyRate = basicSalary / (22 * 8);
+        double grossPayBasedOnHours = hourlyRate * totalHours;
+
+        // For now, let's use the calculation based on days worked
+        double grossPay = grossPayBasedOnDays;
+
+        // Deductions - sample fixed values, replace with actual BIR tables or formulas
         double sss = 500;
         double philHealth = 300;
         double pagibig = 200;
-        double withholdingTax = basicSalary * 0.10; // Sample BIR 10%
+
+        // Compute withholding tax (10% of gross for simplicity)
+        double withholdingTax = grossPay * 0.10;
 
         double totalDeductions = sss + philHealth + pagibig + withholdingTax;
-        double grossPay = basicSalary; // You can multiply by days or hours here
         double netPay = grossPay - totalDeductions;
 
-        add(new JLabel("Employee:"));
-        add(new JLabel(employeeName));
-        add(new JLabel("Total Days Worked:"));
-        add(new JLabel(String.valueOf(totalDays)));
-        add(new JLabel("Total Hours Worked:"));
-        add(new JLabel(String.format("%.2f", totalHours)));
-        add(new JLabel("Gross Pay:"));
-        add(new JLabel(String.format("Php %.2f", grossPay)));
+        // Table setup
+        String[] columns = {"Description", "Amount (Php)"};
+        Object[][] data = {
+                {"Employee Name", employeeName},
+                {"Employee ID", employeeId},
+                {"Basic Salary", String.format("%.2f", basicSalary)}, // Added basic salary
+                {"Total Days Worked", totalDays},
+                {"Total Hours Worked", String.format("%.2f", totalHours)},
+                {"Gross Pay", String.format("%.2f", grossPay)},
+                {"Deductions", ""},
+                {"- SSS", String.format("%.2f", sss)},
+                {"- PhilHealth", String.format("%.2f", philHealth)},
+                {"- Pag-IBIG", String.format("%.2f", pagibig)},
+                {"- Withholding Tax (10%)", String.format("%.2f", withholdingTax)},
+                {"Net Pay", String.format("%.2f", netPay)}
+        };
 
-        add(new JLabel("Deductions"));
-        add(new JLabel(""));
-        add(new JLabel("SSS:"));
-        add(new JLabel(String.format("Php %.2f", sss)));
-        add(new JLabel("PhilHealth:"));
-        add(new JLabel(String.format("Php %.2f", philHealth)));
-        add(new JLabel("Pag-IBIG:"));
-        add(new JLabel(String.format("Php %.2f", pagibig)));
-        add(new JLabel("Withholding Tax:"));
-        add(new JLabel(String.format("Php %.2f", withholdingTax)));
+        DefaultTableModel model = new DefaultTableModel(data, columns) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make table read-only
+            }
+        };
 
-        add(new JLabel("Net Salary:"));
-        add(new JLabel(String.format("Php %.2f", netPay)));
+        JTable table = new JTable(model);
+        JScrollPane scrollPane = new JScrollPane(table);
+
+        this.setLayout(new BorderLayout());
+        this.add(scrollPane, BorderLayout.CENTER);
 
         setVisible(true);
     }

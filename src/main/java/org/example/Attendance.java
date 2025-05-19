@@ -133,6 +133,22 @@ public class Attendance extends JFrame {
         return "";
     }
 
+    public java.util.List<AttendanceRecord> getAttendanceDataById(String id) {
+        String name = employeeMap.get(id);
+        java.util.List<AttendanceRecord> records = new java.util.ArrayList<>();
+
+        for (int i = 0; i < attendanceModel.getRowCount(); i++) {
+            String recordName = (String) attendanceModel.getValueAt(i, 0);
+            if (recordName.equals(name)) {
+                String date = (String) attendanceModel.getValueAt(i, 1);
+                String timeIn = (String) attendanceModel.getValueAt(i, 2);
+                String timeOut = (String) attendanceModel.getValueAt(i, 3);
+                records.add(new AttendanceRecord(date, timeIn, timeOut));
+            }
+        }
+        return records;
+    }
+
 
 }
 
