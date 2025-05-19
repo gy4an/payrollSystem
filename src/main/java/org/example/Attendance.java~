@@ -113,10 +113,10 @@ public class Attendance extends JFrame {
 
             if (selectedRow != -1 && attendanceModel.getValueAt(selectedRow, 0).equals(name) && attendanceModel
                     .getValueAt(selectedRow, 1).equals(date)) {
+                attendanceModel.setValueAt(time, selectedRow, 3);
                 if (timeField.getText().isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Please enter a time.");
                 } else {
-                    attendanceModel.setValueAt(time, selectedRow, 3);
                     JOptionPane.showMessageDialog(this, name + " checked out at " + time);
                 }
                 checkInOutButton.setText("Check In");
@@ -140,23 +140,4 @@ public class Attendance extends JFrame {
         }
         return "";
     }
-
-    public java.util.List<AttendanceRecord> getAttendanceDataById(String id) {
-        String name = employeeMap.get(id);
-        java.util.List<AttendanceRecord> records = new java.util.ArrayList<>();
-
-        for (int i = 0; i < attendanceModel.getRowCount(); i++) {
-            String recordName = (String) attendanceModel.getValueAt(i, 0);
-            if (recordName.equals(name)) {
-                String date = (String) attendanceModel.getValueAt(i, 1);
-                String timeIn = (String) attendanceModel.getValueAt(i, 2);
-                String timeOut = (String) attendanceModel.getValueAt(i, 3);
-                records.add(new AttendanceRecord(date, timeIn, timeOut));
-            }
-        }
-        return records;
-    }
-
-
 }
-
