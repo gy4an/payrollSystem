@@ -87,6 +87,7 @@ public class Attendance extends JFrame {
     public void addEmployee(String id, String name) {
         employeeMap.put(id,name);
     }
+
     public void handleCheck() {
         String id = idField.getText().trim();
         String date = dateField.getText().trim();
@@ -97,41 +98,42 @@ public class Attendance extends JFrame {
             return;
         }
 
+        if (!isValidMilitaryTime(time)) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid military time (HH:mm, 00:00–23:59).");
+            return;
+        }
+
+        if (!isValidDateFormat(date)) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid date format (mm/dd/yyyy).");
+            return;
+        }
+
         String name = employeeMap.get(id);
 
         if (checkInOutButton.getText().equals("Check In")) {
-            if (timeField.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please enter a time.");
-            } else {
-                attendanceModel.addRow(new Object[]{name,date,time,null});
-                JOptionPane.showMessageDialog(this, name + " checked in at " + time);
-            }
-            idField.setText("");
-            dateField.setText("");
-            timeField.setText("");
+            attendanceModel.addRow(new Object[]{name, date, time, null});
+            JOptionPane.showMessageDialog(this, name + " checked in at " + time);
         } else {
+            if (selectedRow != -1 &&
+                    attendanceModel.getValueAt(selectedRow, 0).equals(name) &&
+                    attendanceModel.getValueAt(selectedRow, 1).equals(date)) {
 
-            if (selectedRow != -1 && attendanceModel.getValueAt(selectedRow, 0).equals(name) && attendanceModel
-                    .getValueAt(selectedRow, 1).equals(date)) {
-                if (timeField.getText().isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Please enter a time.");
-                } else {
-                    attendanceModel.setValueAt(time, selectedRow, 3);
-                    JOptionPane.showMessageDialog(this, name + " checked out at " + time);
-                }
+                attendanceModel.setValueAt(time, selectedRow, 3);
+                JOptionPane.showMessageDialog(this, name + " checked out at " + time);
+
                 checkInOutButton.setText("Check In");
                 selectedRow = -1;
                 attendanceTable.clearSelection();
-                idField.setText("");
-                dateField.setText("");
-                timeField.setText("");
             } else {
                 JOptionPane.showMessageDialog(this, "Please select the correct row for check out.");
             }
         }
 
+        idField.setText("");
+        dateField.setText("");
         timeField.setText("");
     }
+
     public String getEmployeeIdByName(String name) {
         for (Map.Entry<String, String> entry : employeeMap.entrySet()) {
             if (entry.getValue().equals(name)) {
@@ -156,7 +158,12 @@ public class Attendance extends JFrame {
         }
         return records;
     }
-
+    public boolean isValidMilitaryTime(String time) {
+        return time.matches("([01]\\d|2[0-3]):[0-5]\\d");
+    }
+    public boolean isValidDateFormat(String date) {
+        return date.matches("(0[1-9]|1[0-2])/([0][1-9]|[12][0-9]|3[01])/\\d{4}");
+    }
 
 }
 
