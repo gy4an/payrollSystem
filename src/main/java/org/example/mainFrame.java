@@ -76,52 +76,22 @@ public class mainFrame extends JFrame {
         attendanceFrame.setVisible(true);
     }
     public void addEmployee() {
-        String id = idTextField.getText().trim();
-        String name = nameTextField.getText().trim();
-        String position = positionTextField.getText().trim();
-        String salaryStr = salaryTextField.getText().trim();
+        String id = idTextField.getText();
+        String name = nameTextField.getText();
+        String position = positionTextField.getText();
+        double salary = Double.parseDouble(salaryTextField.getText());
 
-        // Check for empty fields
-        if (id.isEmpty() || name.isEmpty() || position.isEmpty() || salaryStr.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please fill in all fields.", "Input Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Check if salary is a valid number
-        double salary;
-        try {
-            salary = Double.parseDouble(salaryStr);
-            if (salary < 0) {
-                JOptionPane.showMessageDialog(this, "Salary cannot be negative.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Salary must be a valid number.", "Input Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Check for duplicate ID
-        for (Employee emp : employeesList) {
-            if (emp.getId().equals(id)) {
-                JOptionPane.showMessageDialog(this, "Employee ID already exists.", "Duplicate ID", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        }
-
-        // Add employee if all inputs are valid
         Employee employee = new Employee(id, name, position, salary);
         employeesList.add(employee);
         tableModel.addRow(new Object[]{id, name, position, salary});
 
-        attendanceFrame.addEmployee(id, name);
+        attendanceFrame.addEmployee(id,name);
 
-        // Clear fields
         idTextField.setText("");
         nameTextField.setText("");
         positionTextField.setText("");
         salaryTextField.setText("");
     }
-
     public void computePayroll() {
         int row = table.getSelectedRow();
         if (row == -1) {
