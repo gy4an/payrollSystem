@@ -1,0 +1,85 @@
+package org.example;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+public class PayrollSummaryFrame extends JFrame {
+
+    public PayrollSummaryFrame(String employeeName, String employeeId, double basicSalary, List<AttendanceRecord> attendanceRecords, List<Employee> allEmployees) {
+        setTitle("Payroll Summary");
+        setSize(600, 400);
+        setLocationRelativeTo(null);
+
+        int totalDays = 0;
+        double totalHours = 0.0;
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+
+        for (AttendanceRecord record : attendanceRecords) {
+            if (record.getTimeIn() != null && !record.getTimeIn().isEmpty()
+                    && record.getTimeOut() != null && !record.getTimeOut().isEmpty()) {
+                totalDays++;
+
+                try {
+                    long diffInMillis = sdf.parse(record.getTimeOut()).getTime() - sdf.parse(record.getTimeIn()).getTime();
+                    double hours = TimeUnit.MILLISECONDS.toMinutes(diffInMillis) / 60.0;
+                    if (hours < 0) {
+                        hours = 0;
+                    }
+                    totalHours += hours;
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        double dailyRate = basicSalary / 22.0;
+        double grossPayBasedOnDays = dailyRate * totalDays;
+        double hourlyRate = basicSalary / (22 * 8);
+        double grossPayBasedOnHours = hourlyRate * totalHours;
+        double grossPay = grossPayBasedOnDays;
+
+        double sss = 500;
+        double philHealth = 300;
+        double pagibig = 200;
+        double withholdingTax = grossPay * 0.10;
+
+        double totalDeductions = sss + philHealth + pagibig + withholdingTax;
+        double netPay = grossPay - totalDeductions;
+
+        String[] columns = {"Description", "Amount (Php)"};
+        Object[][] data = {
+                {"Employee Name", employeeName},
+                {"Employee ID", employeeId},
+                {"Basic Salary", String.format("%.2f", basicSalary)},
+                {"Total Days Worked", totalDays},
+                {"Total Hours Worked", String.format("%.2f", totalHours)},
+                {"Gross Pay", String.format("%.2f", grossPay)},
+                {"Deductions", ""},
+                {"- SSS", String.format("%.2f", sss)},
+                {"- PhilHealth", String.format("%.2f", philHealth)},
+                {"- Pag-IBIG", String.format("%.2f", pagibig)},
+                {"- Withholding Tax (10%)", String.format("%.2f", withholdingTax)},
+                {"Net Pay", String.format("%.2f", netPay)}
+        };
+
+        DefaultTableModel model = new DefaultTableModel(data, columns) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        JTable table = new JTable(model);
+        JScrollPane scrollPane = new JScrollPane(table);
+
+        this.setLayout(new BorderLayout());
+        this.add(scrollPane, BorderLayout.CENTER);
+
+        setVisible(true);
+    }
+}
