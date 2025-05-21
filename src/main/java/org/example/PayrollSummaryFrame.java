@@ -15,7 +15,7 @@ public class PayrollSummaryFrame extends JFrame {
         setSize(600, 400);
         setLocationRelativeTo(null);
 
-        // Calculate total days worked (days with check-in and check-out)
+        // Calculate total days and hours worked
         int totalDays = 0;
         double totalHours = 0.0;
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
@@ -28,9 +28,7 @@ public class PayrollSummaryFrame extends JFrame {
                 try {
                     long diffInMillis = sdf.parse(record.getTimeOut()).getTime() - sdf.parse(record.getTimeIn()).getTime();
                     double hours = TimeUnit.MILLISECONDS.toMinutes(diffInMillis) / 60.0;
-                    if (hours < 0) {
-                        hours = 0;
-                    }
+                    if (hours < 0) hours = 0;
                     totalHours += hours;
                 } catch (ParseException e) {
                     e.printStackTrace();
@@ -38,26 +36,18 @@ public class PayrollSummaryFrame extends JFrame {
             }
         }
 
-        // **Improved Gross Pay Calculation:**
-        // Assuming basicSalary is a monthly salary and typically there are around 22 working days.
-        // You might need to adjust this based on your specific payroll rules.
-        double dailyRate = basicSalary / 22.0; // Approximate daily rate
-        double grossPayBasedOnDays = dailyRate * totalDays;
+        // Payroll computation: monthly-based
+        double standardMonthlyHours = 22 * 8; // 176 hours per month
+        double hourlyRate = basicSalary / standardMonthlyHours;
+        double grossPay = hourlyRate * totalHours;
 
-        // You could also consider hourly rate if that's more relevant
-        double hourlyRate = basicSalary / (22 * 8);
-        double grossPayBasedOnHours = hourlyRate * totalHours;
+        // Updated deductions
+        double sss = Math.min(grossPay * 0.045, 1350); // Max employee share
+        double philHealthBase = Math.min(100000, Math.max(10000, grossPay));
+        double philHealth = (philHealthBase * 0.05) / 2; // 50% employee share
+        double pagibig = Math.min(grossPay * 0.02, 100); // Max of 100
 
-        // For now, let's use the calculation based on days worked
-        double grossPay = grossPayBasedOnDays;
-
-        // Deductions - sample fixed values, replace with actual BIR tables or formulas
-        double sss = 500;
-        double philHealth = 300;
-        double pagibig = 200;
-
-        // Compute withholding tax (10% of gross for simplicity)
-        double withholdingTax = grossPay * 0.10;
+        double withholdingTax = computeWithholdingTax(grossPay);
 
         double totalDeductions = sss + philHealth + pagibig + withholdingTax;
         double netPay = grossPay - totalDeductions;
@@ -67,7 +57,7 @@ public class PayrollSummaryFrame extends JFrame {
         Object[][] data = {
                 {"Employee Name", employeeName},
                 {"Employee ID", employeeId},
-                {"Basic Salary", String.format("%.2f", basicSalary)}, // Added basic salary
+                {"Basic Salary", String.format("%.2f", basicSalary)},
                 {"Total Days Worked", totalDays},
                 {"Total Hours Worked", String.format("%.2f", totalHours)},
                 {"Gross Pay", String.format("%.2f", grossPay)},
@@ -75,14 +65,15 @@ public class PayrollSummaryFrame extends JFrame {
                 {"- SSS", String.format("%.2f", sss)},
                 {"- PhilHealth", String.format("%.2f", philHealth)},
                 {"- Pag-IBIG", String.format("%.2f", pagibig)},
-                {"- Withholding Tax (10%)", String.format("%.2f", withholdingTax)},
+                {"- Withholding Tax", String.format("%.2f", withholdingTax)},
+                {"Total Deductions", String.format("%.2f", totalDeductions)},
                 {"Net Pay", String.format("%.2f", netPay)}
         };
 
         DefaultTableModel model = new DefaultTableModel(data, columns) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Make table read-only
+                return false;
             }
         };
 
@@ -93,5 +84,22 @@ public class PayrollSummaryFrame extends JFrame {
         this.add(scrollPane, BorderLayout.CENTER);
 
         setVisible(true);
+    }
+
+    // Withholding tax computation based on BIR TRAIN monthly tax table
+    private double computeWithholdingTax(double grossPay) {
+        if (grossPay <= 20833) {
+            return 0;
+        } else if (grossPay <= 33332) {
+            return (grossPay - 20833) * 0.20;
+        } else if (grossPay <= 66666) {
+            return 2500 + (grossPay - 33333) * 0.25;
+        } else if (grossPay <= 166666) {
+            return 10833.33 + (grossPay - 66667) * 0.30;
+        } else if (grossPay <= 666666) {
+            return 40833.33 + (grossPay - 166667) * 0.32;
+        } else {
+            return 200833.33 + (grossPay - 666667) * 0.35;
+        }
     }
 }
