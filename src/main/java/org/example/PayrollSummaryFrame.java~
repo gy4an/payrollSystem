@@ -15,6 +15,7 @@ public class PayrollSummaryFrame extends JFrame {
         setSize(600, 400);
         setLocationRelativeTo(null);
 
+        // Calculate total days worked (days with check-in and check-out)
         int totalDays = 0;
         double totalHours = 0.0;
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
@@ -23,6 +24,7 @@ public class PayrollSummaryFrame extends JFrame {
             if (record.getTimeIn() != null && !record.getTimeIn().isEmpty()
                     && record.getTimeOut() != null && !record.getTimeOut().isEmpty()) {
                 totalDays++;
+
                 try {
                     long diffInMillis = sdf.parse(record.getTimeOut()).getTime() - sdf.parse(record.getTimeIn()).getTime();
                     double hours = TimeUnit.MILLISECONDS.toMinutes(diffInMillis) / 60.0;
@@ -36,16 +38,27 @@ public class PayrollSummaryFrame extends JFrame {
             }
         }
 
-        double dailyRate = basicSalary / 22.0;
+        // **Improved Gross Pay Calculation:**
+        // Assuming basicSalary is a monthly salary and typically there are around 22 working days.
+        // You might need to adjust this based on your specific payroll rules.
+        double dailyRate = basicSalary / 22.0; // Approximate daily rate
         double grossPayBasedOnDays = dailyRate * totalDays;
+
+        // You could also consider hourly rate if that's more relevant
         double hourlyRate = basicSalary / (22 * 8);
         double grossPayBasedOnHours = hourlyRate * totalHours;
+
+        // For now, let's use the calculation based on days worked
         double grossPay = grossPayBasedOnDays;
 
+        // Deductions - sample fixed values, replace with actual BIR tables or formulas
         double sss = 500;
         double philHealth = 300;
         double pagibig = 200;
+
+        
         double withholdingTax = grossPay * 0.10;
+
         double totalDeductions = sss + philHealth + pagibig + withholdingTax;
         double netPay = grossPay - totalDeductions;
 
@@ -87,8 +100,8 @@ public class PayrollSummaryFrame extends JFrame {
 
         setVisible(true);
     }
-
     private void openPayslipFrame() {
         new PayslipFrame();
     }
+
 }
