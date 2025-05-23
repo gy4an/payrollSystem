@@ -10,15 +10,33 @@ import java.util.concurrent.TimeUnit;
 
 public class PayrollSummaryFrame extends JFrame {
 
+    // Store values for payslip use
+    private String employeeName;
+    private String employeeId;
+    private double basicSalary;
+    private int totalDays;
+    private double totalHours;
+    private double hourlyRate;
+    private double grossPay;
+    private double sss;
+    private double philHealth;
+    private double pagibig;
+    private double withholdingTax;
+    private double totalDeductions;
+    private double netPay;
+
     public PayrollSummaryFrame(String employeeName, String employeeId, double basicSalary, List<AttendanceRecord> attendanceRecords, List<Employee> allEmployees) {
         setTitle("Payroll Summary");
         setSize(600, 400);
         setLocationRelativeTo(null);
 
-        // Calculate total days and hours worked
-        int totalDays = 0;
-        double totalHours = 0.0;
+        this.employeeName = employeeName;
+        this.employeeId = employeeId;
+        this.basicSalary = basicSalary;
+
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+        totalDays = 0;
+        totalHours = 0.0;
 
         for (AttendanceRecord record : attendanceRecords) {
             if (record.getTimeIn() != null && !record.getTimeIn().isEmpty()
@@ -35,23 +53,21 @@ public class PayrollSummaryFrame extends JFrame {
             }
         }
 
-        // Payroll computation: monthly-based
-        double standardMonthlyHours = 22 * 8; // 176 hours per month
-        double hourlyRate = basicSalary / standardMonthlyHours;
-        double grossPay = hourlyRate * totalHours;
+        // Computations
+        double standardMonthlyHours = 22 * 8;
+        hourlyRate = basicSalary / standardMonthlyHours;
+        grossPay = hourlyRate * totalHours;
 
-        // Updated deductions
-        double sss = Math.min(grossPay * 0.045, 1350); // Max employee share
+        sss = Math.min(grossPay * 0.045, 1350);
         double philHealthBase = Math.min(100000, Math.max(10000, grossPay));
-        double philHealth = (philHealthBase * 0.05) / 2; // 50% employee share
-        double pagibig = Math.min(grossPay * 0.02, 100); // Max of 100
+        philHealth = (philHealthBase * 0.05) / 2;
+        pagibig = Math.min(grossPay * 0.02, 100);
 
-        double withholdingTax = computeWithholdingTax(grossPay);
+        withholdingTax = computeWithholdingTax(grossPay);
+        totalDeductions = sss + philHealth + pagibig + withholdingTax;
+        netPay = grossPay - totalDeductions;
 
-        double totalDeductions = sss + philHealth + pagibig + withholdingTax;
-        double netPay = grossPay - totalDeductions;
-
-        // Table setup
+        // Table display
         String[] columns = {"Description", "Amount (Php)"};
         Object[][] data = {
                 {"Employee Name", employeeName},
@@ -82,7 +98,7 @@ public class PayrollSummaryFrame extends JFrame {
         this.setLayout(new BorderLayout());
         this.add(scrollPane, BorderLayout.CENTER);
 
-        // Add "Generate Payslip" button
+        // Generate Payslip Button
         JButton generatePayslipButton = new JButton("Generate Payslip");
         generatePayslipButton.addActionListener(e -> openPayslipFrame());
 
@@ -93,7 +109,6 @@ public class PayrollSummaryFrame extends JFrame {
         setVisible(true);
     }
 
-    // Withholding tax computation based on BIR TRAIN monthly tax table
     private double computeWithholdingTax(double grossPay) {
         if (grossPay <= 20833) {
             return 0;
@@ -110,8 +125,27 @@ public class PayrollSummaryFrame extends JFrame {
         }
     }
 
-    // Dummy method to open payslip frame
     private void openPayslipFrame() {
-        new PayslipFrame(); // You can modify this to pass payroll data if needed
+        StringBuilder payslipText = new StringBuilder();
+        payslipText.append("=========== PAYSLIP ===========\n");
+        payslipText.append("Employee Name     : ").append(employeeName).append("\n");
+        payslipText.append("Employee ID       : ").append(employeeId).append("\n");
+        payslipText.append("--------------------------------\n");
+        payslipText.append(String.format("Basic Salary      : Php %.2f\n", basicSalary));
+        payslipText.append(String.format("Total Days Worked : %d\n", totalDays));
+        payslipText.append(String.format("Total Hours Worked: %.2f\n", totalHours));
+        payslipText.append(String.format("Hourly Rate       : Php %.2f\n", hourlyRate));
+        payslipText.append(String.format("Gross Pay         : Php %.2f\n", grossPay));
+        payslipText.append("\n-------- Deductions --------\n");
+        payslipText.append(String.format("SSS               : Php %.2f\n", sss));
+        payslipText.append(String.format("PhilHealth        : Php %.2f\n", philHealth));
+        payslipText.append(String.format("Pag-IBIG          : Php %.2f\n", pagibig));
+        payslipText.append(String.format("Withholding Tax   : Php %.2f\n", withholdingTax));
+        payslipText.append(String.format("Total Deductions  : Php %.2f\n", totalDeductions));
+        payslipText.append("\n-----------------------------\n");
+        payslipText.append(String.format("NET PAY           : Php %.2f\n", netPay));
+        payslipText.append("================================\n");
+
+        new PayslipFrame(payslipText.toString());
     }
 }
