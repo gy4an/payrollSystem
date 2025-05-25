@@ -1,0 +1,11 @@
+package org.example;
+
+import javax.swing.*;
+import java.util.List;
+
+public class OwnerLiquidationFrame extends JFrame {
+    public OwnerLiquidationFrame(List<Employee> employeeList, Attendance attendanceFrame) {
+        this.setTitle("Owner's Costs");
+        
+    }
+}

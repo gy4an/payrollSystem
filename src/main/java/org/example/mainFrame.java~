@@ -69,13 +69,7 @@ public class mainFrame extends JFrame {
         buttonPanel.add(payrollSummaryButton);
 
         payrollSummaryButton.addActionListener(e -> showPayrollSummary());
-        ownerCostsButton.addActionListener(e -> {
-            if (employeesList.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "No employees available to display.");
-                return;
-            }
-            new OwnerLiquidationFrame(employeesList, attendanceFrame);
-        });
+        
 
         this.setSize(600, 500);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
