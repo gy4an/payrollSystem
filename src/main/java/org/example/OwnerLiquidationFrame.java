@@ -11,29 +11,28 @@ import java.util.concurrent.TimeUnit;
 public class OwnerLiquidationFrame extends JFrame {
     public OwnerLiquidationFrame(List<Employee> employeesList, Attendance attendanceFrame) {
         setTitle("Owner Costs Summary");
-        setSize(800, 400);
+        setSize(800, 450);
         setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
 
         String[] columns = {"ID", "Name", "Basic Salary", "Total Hours Worked", "SSS", "PhilHealth", "Pag-IBIG", "Net Pay"};
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;  // Make table non-editable
+                return false;
             }
         };
 
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+        double totalNetPay = 0.0;
 
         for (Employee emp : employeesList) {
             List<AttendanceRecord> attendanceRecords = attendanceFrame.getAttendanceDataById(emp.getId());
 
-            // Calculate total hours worked
             double totalHours = 0.0;
-            int totalDays = 0;
             for (AttendanceRecord record : attendanceRecords) {
                 if (record.getTimeIn() != null && !record.getTimeIn().isEmpty() &&
                         record.getTimeOut() != null && !record.getTimeOut().isEmpty()) {
-                    totalDays++;
                     try {
                         long timeInMillis = sdf.parse(record.getTimeIn()).getTime();
                         long timeOutMillis = sdf.parse(record.getTimeOut()).getTime();
@@ -55,7 +54,6 @@ public class OwnerLiquidationFrame extends JFrame {
             double hourlyRate = emp.getBasicSalary() / standardMonthlyHours;
             double grossPay = hourlyRate * totalHours;
 
-            // Calculate deductions same as PayrollSummaryFrame
             double sss = computeSSSContribution(grossPay);
             double philHealth = computePhilHealthContribution(grossPay);
             double pagibig = computePagIbigContribution(grossPay);
@@ -63,6 +61,8 @@ public class OwnerLiquidationFrame extends JFrame {
 
             double totalDeductions = sss + philHealth + pagibig + withholdingTax;
             double netPay = grossPay - totalDeductions;
+
+            totalNetPay += netPay;
 
             model.addRow(new Object[]{
                     emp.getId(),
@@ -80,9 +80,17 @@ public class OwnerLiquidationFrame extends JFrame {
         JScrollPane scrollPane = new JScrollPane(table);
         add(scrollPane, BorderLayout.CENTER);
 
+        // Bottom panel for total net pay
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JLabel totalNetPayLabel = new JLabel("Total Net Pay: ₱" + String.format("%.2f", totalNetPay));
+        totalNetPayLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        bottomPanel.add(totalNetPayLabel);
+        add(bottomPanel, BorderLayout.SOUTH);
+
         setVisible(true);
     }
 
+    // Helper methods (same as before)
     private double computeWithholdingTax(double grossPay) {
         if (grossPay <= 20833) {
             return 0.0;
@@ -111,10 +119,10 @@ public class OwnerLiquidationFrame extends JFrame {
 
     private double computePhilHealthContribution(double grossMonthly) {
         double base = Math.min(100000, Math.max(10000, grossMonthly));
-        return (base * 0.05) / 2; // Employer share (adjust if needed)
+        return (base * 0.05) / 2;
     }
 
     private double computePagIbigContribution(double grossMonthly) {
-        return Math.min(grossMonthly * 0.02, 100); // Employer share (adjust if needed)
+        return Math.min(grossMonthly * 0.02, 100);
     }
 }

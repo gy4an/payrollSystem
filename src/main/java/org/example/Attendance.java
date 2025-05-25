@@ -18,7 +18,7 @@ public class Attendance extends JFrame {
         this.setTitle("Employee Attendance Log");
         this.setLayout(new BorderLayout());
 
-        attendanceModel = new DefaultTableModel(new String[]{"Name", "Date", "Time Checked In", "Time Checked Out"},0);
+        attendanceModel = new DefaultTableModel(new String[]{"Name", "Date", "Time Checked In", "Time Checked Out", "Date Checked Out"},0);
         attendanceTable = new JTable(attendanceModel);
         add(new JScrollPane(attendanceTable), BorderLayout.CENTER);
 
@@ -92,6 +92,7 @@ public class Attendance extends JFrame {
         String id = idField.getText().trim();
         String date = dateField.getText().trim();
         String time = timeField.getText().trim();
+        String dateOut = date;
 
         if (!employeeMap.containsKey(id)) {
             JOptionPane.showMessageDialog(this, "ID not found in employee list");
@@ -111,7 +112,7 @@ public class Attendance extends JFrame {
         String name = employeeMap.get(id);
 
         if (checkInOutButton.getText().equals("Check In")) {
-            attendanceModel.addRow(new Object[]{name, date, time, null});
+            attendanceModel.addRow(new Object[]{name, date, time, null, null});
             JOptionPane.showMessageDialog(this, name + " checked in at " + time);
         } else {
             if (selectedRow != -1 &&
@@ -119,6 +120,19 @@ public class Attendance extends JFrame {
                     attendanceModel.getValueAt(selectedRow, 1).equals(date)) {
 
                 attendanceModel.setValueAt(time, selectedRow, 3);
+                String[] inParts = attendanceModel.getValueAt(selectedRow, 2).toString().split(":");
+                String[] outParts = time.split(":");
+
+                int inHour = Integer.parseInt(inParts[0]);
+                int outHour = Integer.parseInt(outParts[0]);
+
+                if (outHour < inHour) {
+                    dateOut = getNextDate(date); // compute next day
+                }
+
+                attendanceModel.setValueAt(time, selectedRow, 3);
+                attendanceModel.setValueAt(dateOut, selectedRow, 4);
+
                 JOptionPane.showMessageDialog(this, name + " checked out at " + time);
 
                 checkInOutButton.setText("Check In");
@@ -153,11 +167,25 @@ public class Attendance extends JFrame {
                 String date = (String) attendanceModel.getValueAt(i, 1);
                 String timeIn = (String) attendanceModel.getValueAt(i, 2);
                 String timeOut = (String) attendanceModel.getValueAt(i, 3);
-                records.add(new AttendanceRecord(date, timeIn, timeOut));
+                String dateOut = (String) attendanceModel.getValueAt(i, 4);
+                records.add(new AttendanceRecord(date, timeIn, timeOut, dateOut));
             }
         }
         return records;
     }
+    public String getNextDate(String date) {
+        try {
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MM/dd/yyyy");
+            java.util.Date parsedDate = sdf.parse(date);
+            java.util.Calendar calendar = java.util.Calendar.getInstance();
+            calendar.setTime(parsedDate);
+            calendar.add(java.util.Calendar.DATE, 1);
+            return sdf.format(calendar.getTime());
+        } catch (Exception e) {
+            return date; // fallback in case of error
+        }
+    }
+
     public boolean isValidMilitaryTime(String time) {
         return time.matches("([01]\\d|2[0-3]):[0-5]\\d");
     }
