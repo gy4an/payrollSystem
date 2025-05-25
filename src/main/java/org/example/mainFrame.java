@@ -10,7 +10,7 @@ public class mainFrame extends JFrame {
     Attendance attendanceFrame = new Attendance();
     JTextField idTextField, nameTextField, positionTextField, salaryTextField;
     JLabel idLabel, nameLabel, positionLabel, salaryLabel;
-    JButton addButton, updateButton, deleteButton, computeButton;
+    JButton addButton, updateButton, deleteButton, computeButton, ownerCostsButton;
     JTable table;
     DefaultTableModel tableModel;
     List<Employee> employeesList = new ArrayList<>();
@@ -23,7 +23,7 @@ public class mainFrame extends JFrame {
 
         JPanel formPanel = new JPanel(new GridLayout(4,2,5,5));
         formPanel.setBorder(BorderFactory.createTitledBorder("Add Employee"));
-        JPanel buttonPanel = new JPanel(new GridLayout(1,3,5,5));
+        JPanel buttonPanel = new JPanel(new GridLayout(2,3,5,5));
         buttonPanel.setBorder(BorderFactory.createTitledBorder("Options"));
 
         idLabel = new JLabel("ID");
@@ -38,6 +38,7 @@ public class mainFrame extends JFrame {
         addButton = new JButton("Add Employee");
         updateButton = new JButton("Update Employee");
         deleteButton = new JButton("Delete Employee");
+        ownerCostsButton = new JButton("View Owner Costs");
 
 
 
@@ -54,6 +55,7 @@ public class mainFrame extends JFrame {
         buttonPanel.add(addButton);
         buttonPanel.add(updateButton);
         buttonPanel.add(deleteButton);
+        buttonPanel.add(ownerCostsButton);
 
 
         add(formPanel, BorderLayout.NORTH);
@@ -70,7 +72,7 @@ public class mainFrame extends JFrame {
 
         payrollSummaryButton.addActionListener(e -> showPayrollSummary());
 
-        this.setSize(500, 500);
+        this.setSize(600, 500);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setVisible(true);
         attendanceFrame.setVisible(true);
@@ -111,6 +113,27 @@ public class mainFrame extends JFrame {
                 basic, sss, philHealth, pagibig, incomeTax, netPay);
 
         JOptionPane.showMessageDialog(this, message, "Payroll Computation", JOptionPane.INFORMATION_MESSAGE);
+    }
+    public void showOwnerCosts() {
+        double totalSSS = 0;
+        double totalPhilHealth = 0;
+        double totalPagibig = 0;
+        double totalSalary = 0;
+
+        StringBuilder db = new StringBuilder();
+
+        for (Employee employee : employeesList) {
+            List<AttendanceRecord> records = attendanceFrame.getAttendanceDataById(employee.getId());
+            int daysWorked = 0;
+            for (AttendanceRecord record : records) {
+                if (record.getTimeIn() != null && record.getTimeOut() != null) {
+                    daysWorked++;
+                }
+            }
+
+            double dailyRate = employee.getBasicSalary() / 22.0;
+            double salary = dailyRate * daysWorked;
+        }
     }
 
     public void showPayrollSummary() {

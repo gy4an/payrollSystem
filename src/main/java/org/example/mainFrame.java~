@@ -23,7 +23,7 @@ public class mainFrame extends JFrame {
 
         JPanel formPanel = new JPanel(new GridLayout(4,2,5,5));
         formPanel.setBorder(BorderFactory.createTitledBorder("Add Employee"));
-        JPanel buttonPanel = new JPanel(new GridLayout(1,3,5,5));
+        JPanel buttonPanel = new JPanel(new GridLayout(2,3,5,5));
         buttonPanel.setBorder(BorderFactory.createTitledBorder("Options"));
 
         idLabel = new JLabel("ID");
@@ -42,6 +42,7 @@ public class mainFrame extends JFrame {
 
 
 
+
         formPanel.add(idLabel);
         formPanel.add(idTextField);
         formPanel.add(nameLabel);
@@ -54,6 +55,7 @@ public class mainFrame extends JFrame {
         buttonPanel.add(addButton);
         buttonPanel.add(updateButton);
         buttonPanel.add(deleteButton);
+        buttonPanel.add(ownerCostsButton);
 
 
         add(formPanel, BorderLayout.NORTH);
@@ -70,7 +72,7 @@ public class mainFrame extends JFrame {
 
         payrollSummaryButton.addActionListener(e -> showPayrollSummary());
 
-        this.setSize(500, 500);
+        this.setSize(600, 500);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setVisible(true);
         attendanceFrame.setVisible(true);
@@ -91,6 +93,14 @@ public class mainFrame extends JFrame {
         nameTextField.setText("");
         positionTextField.setText("");
         salaryTextField.setText("");
+    }
+    public void showOwnerCosts() {
+        double totalSSS = 0;
+        double totalPhilHealth = 0;
+        double totalPagibig = 0;
+        double totalSalary = 0;
+
+        for (Employee employee : employeesList) {
     }
     public void computePayroll() {
         int row = table.getSelectedRow();

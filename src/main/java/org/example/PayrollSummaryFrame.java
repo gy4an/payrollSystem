@@ -43,10 +43,16 @@ public class PayrollSummaryFrame extends JFrame {
                     && record.getTimeOut() != null && !record.getTimeOut().isEmpty()) {
                 totalDays++;
                 try {
-                    long diffInMillis = sdf.parse(record.getTimeOut()).getTime() - sdf.parse(record.getTimeIn()).getTime();
-                    double hours = TimeUnit.MILLISECONDS.toMinutes(diffInMillis) / 60.0;
-                    if (hours < 0) hours = 0;
-                    totalHours += hours;
+                    long timeInMillis = sdf.parse(record.getTimeIn()).getTime();
+                    long timeOutMillis = sdf.parse(record.getTimeOut()).getTime();
+
+                    if (timeOutMillis < timeInMillis) {
+                        timeOutMillis += TimeUnit.HOURS.toMillis(24);
+                    }
+
+                    long diffInMillis = timeOutMillis - timeInMillis;
+                    double Hours = TimeUnit.MILLISECONDS.toMinutes(diffInMillis) / 60.0;
+                    totalHours += Hours;
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
