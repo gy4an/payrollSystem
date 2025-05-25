@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 public class PayrollSummaryFrame extends JFrame {
 
-    // Store values for payslip use
+    // Payroll variables
     private String employeeName;
     private String employeeId;
     private double basicSalary;
@@ -25,7 +25,8 @@ public class PayrollSummaryFrame extends JFrame {
     private double totalDeductions;
     private double netPay;
 
-    public PayrollSummaryFrame(String employeeName, String employeeId, double basicSalary, List<AttendanceRecord> attendanceRecords, List<Employee> allEmployees) {
+    public PayrollSummaryFrame(String employeeName, String employeeId, double basicSalary,
+                               List<AttendanceRecord> attendanceRecords, List<Employee> allEmployees) {
         setTitle("Payroll Summary");
         setSize(600, 400);
         setLocationRelativeTo(null);
@@ -34,6 +35,8 @@ public class PayrollSummaryFrame extends JFrame {
         this.employeeId = employeeId;
         this.basicSalary = basicSalary;
 
+
+        // Compute total hours and days
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
         totalDays = 0;
         totalHours = 0.0;
@@ -51,25 +54,25 @@ public class PayrollSummaryFrame extends JFrame {
                     }
 
                     long diffInMillis = timeOutMillis - timeInMillis;
-                    double Hours = TimeUnit.MILLISECONDS.toMinutes(diffInMillis) / 60.0;
-                    totalHours += Hours;
+                    double hours = TimeUnit.MILLISECONDS.toMinutes(diffInMillis) / 60.0;
+                    totalHours += hours;
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
             }
         }
 
-        // Computations
-        double standardMonthlyHours = 22 * 8;
+        // Payroll computations
+        double standardMonthlyHours = 22 * 8.0;
         hourlyRate = basicSalary / standardMonthlyHours;
         grossPay = hourlyRate * totalHours;
 
-        sss = Math.min(grossPay * 0.045, 1350);
-        double philHealthBase = Math.min(100000, Math.max(10000, grossPay));
-        philHealth = (philHealthBase * 0.05) / 2;
-        pagibig = Math.min(grossPay * 0.02, 100);
-
         withholdingTax = computeWithholdingTax(grossPay);
+        sss = computeSSSContribution(grossPay);
+        philHealth = computePhilHealthContribution(grossPay);
+        pagibig = computePagIbigContribution(grossPay);
+
+
         totalDeductions = sss + philHealth + pagibig + withholdingTax;
         netPay = grossPay - totalDeductions;
 
@@ -100,11 +103,10 @@ public class PayrollSummaryFrame extends JFrame {
 
         JTable table = new JTable(model);
         JScrollPane scrollPane = new JScrollPane(table);
-
         this.setLayout(new BorderLayout());
         this.add(scrollPane, BorderLayout.CENTER);
 
-        // Generate Payslip Button
+        // Payslip Button
         JButton generatePayslipButton = new JButton("Generate Payslip");
         generatePayslipButton.addActionListener(e -> openPayslipFrame());
 
@@ -117,18 +119,37 @@ public class PayrollSummaryFrame extends JFrame {
 
     private double computeWithholdingTax(double grossPay) {
         if (grossPay <= 20833) {
-            return 0;
-        } else if (grossPay <= 33332) {
+            return 0.0;
+        } else if (grossPay <= 33333) {
             return (grossPay - 20833) * 0.20;
-        } else if (grossPay <= 66666) {
+        } else if (grossPay <= 66667) {
             return 2500 + (grossPay - 33333) * 0.25;
-        } else if (grossPay <= 166666) {
+        } else if (grossPay <= 166667) {
             return 10833.33 + (grossPay - 66667) * 0.30;
-        } else if (grossPay <= 666666) {
+        } else if (grossPay <= 666667) {
             return 40833.33 + (grossPay - 166667) * 0.32;
         } else {
             return 200833.33 + (grossPay - 666667) * 0.35;
         }
+    }
+
+    private double computeSSSContribution(double grossMonthly) {
+        if (grossMonthly <= 3250) return 135.00;
+        else if (grossMonthly <= 24750) {
+            double msc = Math.ceil(grossMonthly / 500.0) * 500;
+            return Math.min(msc * 0.045, 1125.00);
+        } else {
+            return 1125.00;
+        }
+    }
+
+    private double computePhilHealthContribution(double grossMonthly) {
+        double base = Math.min(100000, Math.max(10000, grossMonthly));
+        return (base * 0.05) / 2; // Employee share only
+    }
+
+    private double computePagIbigContribution(double grossMonthly) {
+        return Math.min(grossMonthly * 0.02, 100.00);
     }
 
     private void openPayslipFrame() {
@@ -155,3 +176,4 @@ public class PayrollSummaryFrame extends JFrame {
         new PayslipFrame(payslipText.toString());
     }
 }
+

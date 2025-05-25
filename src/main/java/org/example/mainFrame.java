@@ -41,8 +41,6 @@ public class mainFrame extends JFrame {
         ownerCostsButton = new JButton("View Owner Costs");
 
 
-
-
         formPanel.add(idLabel);
         formPanel.add(idTextField);
         formPanel.add(nameLabel);
@@ -77,43 +75,47 @@ public class mainFrame extends JFrame {
         this.setVisible(true);
         attendanceFrame.setVisible(true);
     }
+
+
     public void addEmployee() {
-        String id = idTextField.getText();
-        String name = nameTextField.getText();
-        String position = positionTextField.getText();
-        double salary = Double.parseDouble(salaryTextField.getText());
+        String id = idTextField.getText().trim();
+        String name = nameTextField.getText().trim();
+        String position = positionTextField.getText().trim();
+        String salaryText = salaryTextField.getText().trim();
 
-        Employee employee = new Employee(id, name, position, salary);
-        employeesList.add(employee);
-        tableModel.addRow(new Object[]{id, name, position, salary});
-
-        attendanceFrame.addEmployee(id,name);
-
-        idTextField.setText("");
-        nameTextField.setText("");
-        positionTextField.setText("");
-        salaryTextField.setText("");
-    }
-    public void computePayroll() {
-        int row = table.getSelectedRow();
-        if (row == -1) {
+        if (id.isEmpty() || name.isEmpty() || position.isEmpty() || salaryText.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all fields.", "Input Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        double basic = Double.parseDouble(table.getValueAt(row, 3).toString());
-        double sss = 500;
-        double philHealth = 300;
-        double pagibig = 200;
-        double incomeTax = basic * 0.10;
+        // Duplicate ID check
+        for (Employee emp : employeesList) {
+            if (emp.getId().equals(id)) {
+                JOptionPane.showMessageDialog(this, "Employee ID already exists!", "Duplicate ID", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
 
-        double totalDeductions = sss + philHealth + pagibig + incomeTax;
-        double netPay = basic - totalDeductions;
 
-        String message = String.format("Gross Pay: %.2f\nSSS: %.2f\nPhilHealth: %.2f\nPag-IBIG: %.2f\nIncome Tax: %.2f\nNet Pay: %.2f",
-                basic, sss, philHealth, pagibig, incomeTax, netPay);
+        try {
+            double salary = Double.parseDouble(salaryText);
 
-        JOptionPane.showMessageDialog(this, message, "Payroll Computation", JOptionPane.INFORMATION_MESSAGE);
+            Employee employee = new Employee(id, name, position, salary);
+            employeesList.add(employee);
+            tableModel.addRow(new Object[]{id, name, position, salary});
+
+            attendanceFrame.addEmployee(id, name);
+
+            idTextField.setText("");
+            nameTextField.setText("");
+            positionTextField.setText("");
+            salaryTextField.setText("");
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid salary format.", "Input Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
+
+
     public void showOwnerCosts() {
         double totalSSS = 0;
         double totalPhilHealth = 0;
@@ -143,19 +145,44 @@ public class mainFrame extends JFrame {
             return;
         }
 
-        String id = table.getValueAt(selectedRow, 0).toString();
-        String name = table.getValueAt(selectedRow, 1).toString();
-        double salary = Double.parseDouble(table.getValueAt(selectedRow, 3).toString());
+        try {
+            String id = table.getValueAt(selectedRow, 0).toString();
+            String name = table.getValueAt(selectedRow, 1).toString();
+            String position = table.getValueAt(selectedRow, 2).toString();
+            double salary = Double.parseDouble(table.getValueAt(selectedRow, 3).toString());
 
-        // Find the employee object to get the correct basic salary (if needed later)
-        Employee selectedEmployee = null;
-        for (Employee emp : employeesList) {
-            if (emp.getId().equals(id)) {
-                selectedEmployee = emp;
-                break;
+            // Safely get attendance data
+            List<AttendanceRecord> attendanceData = attendanceFrame.getAttendanceDataById(id);
+            if (attendanceData == null) {
+                JOptionPane.showMessageDialog(this, "No attendance records found for employee ID: " + id);
+                return;
             }
-        }
 
-        new PayrollSummaryFrame(name, id, salary, attendanceFrame.getAttendanceDataById(id), employeesList); // Pass employeesList
+            // Find the employee object (double-checking if it exists)
+            Employee selectedEmployee = null;
+            for (Employee emp : employeesList) {
+                if (emp.getId().equals(id)) {
+                    selectedEmployee = emp;
+                    break;
+                }
+            }
+
+            if (selectedEmployee == null) {
+                JOptionPane.showMessageDialog(this, "Employee not found in the list. Please check the ID.");
+                return;
+            }
+
+            // Now launch the summary
+            new PayrollSummaryFrame(name, id, salary, attendanceData, employeesList);
+
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid salary format.");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
+
+
+
 }
