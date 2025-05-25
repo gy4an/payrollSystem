@@ -35,7 +35,6 @@ public class PayrollSummaryFrame extends JFrame {
         this.employeeId = employeeId;
         this.basicSalary = basicSalary;
 
-
         // Compute total hours and days
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
         totalDays = 0;
@@ -67,11 +66,15 @@ public class PayrollSummaryFrame extends JFrame {
         hourlyRate = basicSalary / standardMonthlyHours;
         grossPay = hourlyRate * totalHours;
 
-        withholdingTax = computeWithholdingTax(grossPay);
-        sss = computeSSSContribution(grossPay);
-        philHealth = computePhilHealthContribution(grossPay);
-        pagibig = computePagIbigContribution(grossPay);
+        Contribution sssContrib = Contribution.computeSSSContribution(grossPay);
+        Contribution philContrib = Contribution.computePhilHealthContribution(grossPay);
+        Contribution pagibigContrib = Contribution.computePagIbigContribution(grossPay);
 
+        sss = sssContrib.employeeShare;
+        philHealth = philContrib.employeeShare;
+        pagibig = pagibigContrib.employeeShare;
+
+        withholdingTax = computeWithholdingTax(grossPay);
 
         totalDeductions = sss + philHealth + pagibig + withholdingTax;
         netPay = grossPay - totalDeductions;
@@ -86,12 +89,16 @@ public class PayrollSummaryFrame extends JFrame {
                 {"Total Hours Worked", String.format("%.2f", totalHours)},
                 {"Gross Pay", String.format("%.2f", grossPay)},
                 {"Deductions", ""},
-                {"- SSS", String.format("%.2f", sss)},
-                {"- PhilHealth", String.format("%.2f", philHealth)},
-                {"- Pag-IBIG", String.format("%.2f", pagibig)},
+                {"- SSS (Employee)", String.format("%.2f", sss)},
+                {"- PhilHealth (Employee)", String.format("%.2f", philHealth)},
+                {"- Pag-IBIG (Employee)", String.format("%.2f", pagibig)},
                 {"- Withholding Tax", String.format("%.2f", withholdingTax)},
                 {"Total Deductions", String.format("%.2f", totalDeductions)},
-                {"Net Pay", String.format("%.2f", netPay)}
+                {"Employer Contributions", ""},
+                {"- SSS (Employer)", String.format("%.2f", sssContrib.employerShare)},
+                {"- PhilHealth (Employer)", String.format("%.2f", philContrib.employerShare)},
+                {"- Pag-IBIG (Employer)", String.format("%.2f", pagibigContrib.employerShare)},
+                {"Net Pay", String.format("%.2f", netPay)},
         };
 
         DefaultTableModel model = new DefaultTableModel(data, columns) {
@@ -108,7 +115,7 @@ public class PayrollSummaryFrame extends JFrame {
 
         // Payslip Button
         JButton generatePayslipButton = new JButton("Generate Payslip");
-        generatePayslipButton.addActionListener(e -> openPayslipFrame());
+        generatePayslipButton.addActionListener(e -> openPayslipFrame(sssContrib, philContrib, pagibigContrib));
 
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottomPanel.add(generatePayslipButton);
@@ -133,26 +140,9 @@ public class PayrollSummaryFrame extends JFrame {
         }
     }
 
-    private double computeSSSContribution(double grossMonthly) {
-        if (grossMonthly <= 3250) return 135.00;
-        else if (grossMonthly <= 24750) {
-            double msc = Math.ceil(grossMonthly / 500.0) * 500;
-            return Math.min(msc * 0.045, 1125.00);
-        } else {
-            return 1125.00;
-        }
-    }
 
-    private double computePhilHealthContribution(double grossMonthly) {
-        double base = Math.min(100000, Math.max(10000, grossMonthly));
-        return (base * 0.05) / 2; // Employee share only
-    }
 
-    private double computePagIbigContribution(double grossMonthly) {
-        return Math.min(grossMonthly * 0.02, 100.00);
-    }
-
-    private void openPayslipFrame() {
+    private void openPayslipFrame(Contribution sssContrib, Contribution philContrib, Contribution pagibigContrib) {
         StringBuilder payslipText = new StringBuilder();
         payslipText.append("=========== PAYSLIP ===========\n");
         payslipText.append("Employee Name     : ").append(employeeName).append("\n");
@@ -164,11 +154,15 @@ public class PayrollSummaryFrame extends JFrame {
         payslipText.append(String.format("Hourly Rate       : Php %.2f\n", hourlyRate));
         payslipText.append(String.format("Gross Pay         : Php %.2f\n", grossPay));
         payslipText.append("\n-------- Deductions --------\n");
-        payslipText.append(String.format("SSS               : Php %.2f\n", sss));
-        payslipText.append(String.format("PhilHealth        : Php %.2f\n", philHealth));
-        payslipText.append(String.format("Pag-IBIG          : Php %.2f\n", pagibig));
+        payslipText.append(String.format("SSS (Employee)    : Php %.2f\n", sss));
+        payslipText.append(String.format("PhilHealth (Emp.) : Php %.2f\n", philHealth));
+        payslipText.append(String.format("Pag-IBIG (Emp.)   : Php %.2f\n", pagibig));
         payslipText.append(String.format("Withholding Tax   : Php %.2f\n", withholdingTax));
         payslipText.append(String.format("Total Deductions  : Php %.2f\n", totalDeductions));
+        payslipText.append("\n-- Employer Contributions --\n");
+        payslipText.append(String.format("SSS (Employer)    : Php %.2f\n", sssContrib.employerShare));
+        payslipText.append(String.format("PhilHealth (Emp.) : Php %.2f\n", philContrib.employerShare));
+        payslipText.append(String.format("Pag-IBIG (Emp.)   : Php %.2f\n", pagibigContrib.employerShare));
         payslipText.append("\n-----------------------------\n");
         payslipText.append(String.format("NET PAY           : Php %.2f\n", netPay));
         payslipText.append("================================\n");
@@ -176,4 +170,3 @@ public class PayrollSummaryFrame extends JFrame {
         new PayslipFrame(payslipText.toString());
     }
 }
-
