@@ -1,10 +1,17 @@
 package org.example;
 
+
+import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.*;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+
 
 public class Attendance extends JFrame {
     JTable attendanceTable;
@@ -12,17 +19,24 @@ public class Attendance extends JFrame {
     JTextField idField, dateField, timeField;
     JLabel idLabel, dateLabel, timeLabel;
     JButton checkInOutButton;
-    Map<String, String> employeeMap = new HashMap<>();
+    //Map<String, String> employeeMap = new HashMap<>(); // No longer needed
     int selectedRow = -1;
+
+
+    private Firestore db;
+
+
     public Attendance() {
         this.setTitle("Employee Attendance Log");
         this.setLayout(new BorderLayout());
 
-        attendanceModel = new DefaultTableModel(new String[]{"Name", "Date", "Time Checked In", "Time Checked Out", "Date Checked Out"},0);
+
+        attendanceModel = new DefaultTableModel(new String[]{"Name", "Date", "Time Checked In", "Time Checked Out", "Date Checked Out"}, 0);
         attendanceTable = new JTable(attendanceModel);
         add(new JScrollPane(attendanceTable), BorderLayout.CENTER);
 
-        JPanel inputPanel = new JPanel(new GridLayout(2,4,5,5));
+
+        JPanel inputPanel = new JPanel(new GridLayout(2, 4, 5, 5));
         idField = new JTextField();
         dateField = new JTextField();
         timeField = new JTextField();
@@ -31,7 +45,9 @@ public class Attendance extends JFrame {
         timeLabel = new JLabel("Time:");
         checkInOutButton = new JButton("Check In");
 
+
         inputPanel.setBorder(BorderFactory.createTitledBorder("Employee Attendance"));
+
 
         inputPanel.add(idLabel);
         inputPanel.add(idField);
@@ -42,18 +58,23 @@ public class Attendance extends JFrame {
         inputPanel.add(new JLabel(""));
         inputPanel.add(checkInOutButton);
 
+
         add(inputPanel, BorderLayout.SOUTH);
 
+
         checkInOutButton.addActionListener(e -> handleCheck());
+
 
         attendanceTable.getSelectionModel().addListSelectionListener(event -> {
             if (!event.getValueIsAdjusting() && attendanceTable.getSelectedRow() != -1) {
                 int row = attendanceTable.getSelectedRow();
                 Object checkoutTime = attendanceModel.getValueAt(row, 3);
 
+
                 if (checkoutTime == null || checkoutTime.toString().isEmpty()) {
                     String selectedName = attendanceModel.getValueAt(row, 0).toString();
                     String selectedDate = attendanceModel.getValueAt(row, 1).toString();
+
 
                     String selectedId = getEmployeeIdByName(selectedName);
                     idField.setText(selectedId);
@@ -63,6 +84,7 @@ public class Attendance extends JFrame {
                 }
             }
         });
+
 
         attendanceTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -80,13 +102,68 @@ public class Attendance extends JFrame {
             }
         });
 
-        this.setSize(700,400);
+
+        this.setSize(700, 400);
         this.setVisible(true);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Change to DISPOSE_ON_CLOSE
+
+
+        db = FirebaseUtil.getDb(); // Initialize Firestore
+        loadAttendanceFromFirestore(); // Load data on startup
     }
-    public void addEmployee(String id, String name) {
-        employeeMap.put(id,name);
+
+
+    //  public void addEmployee(String id, String name) {
+    //    employeeMap.put(id, name);
+    //  }
+
+
+    private void saveAttendanceToFirestore(String name, String date, String time, String timeOut, String dateOut, String employeeId) {
+        CollectionReference attendance = db.collection("attendance");
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", name);
+        data.put("date", date);
+        data.put("timeIn", time);
+        data.put("timeOut", timeOut);
+        data.put("dateOut", dateOut);
+        data.put("employeeId", employeeId); // Store the employeeId
+
+        ApiFuture<DocumentReference> future = attendance.add(data);
+
+        try {
+            DocumentReference docRef = future.get(); // Waits for the operation to complete
+            System.out.println("Attendance record added to Firestore with ID: " + docRef.getId());
+            loadAttendanceFromFirestore(); // Refresh table
+        } catch (Exception e) {
+            System.err.println("Error adding attendance record to Firestore: " + e.getMessage());
+        }
     }
+
+
+    private void loadAttendanceFromFirestore() {
+        CollectionReference attendance = db.collection("attendance");
+
+        ApiFuture<QuerySnapshot> future = attendance.get();
+
+        try {
+            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+            attendanceModel.setRowCount(0); // Clear existing data
+
+            for (QueryDocumentSnapshot document : documents) {
+                String name = document.getString("name");
+                String date = document.getString("date");
+                String timeIn = document.getString("timeIn");
+                String timeOut = document.getString("timeOut");
+                String dateOut = document.getString("dateOut");
+
+                attendanceModel.addRow(new Object[]{name, date, timeIn, timeOut, dateOut});
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading attendance records: " + e.getMessage());
+        }
+    }
+
 
     public void handleCheck() {
         String id = idField.getText().trim();
@@ -94,46 +171,64 @@ public class Attendance extends JFrame {
         String time = timeField.getText().trim();
         String dateOut = date;
 
-        if (!employeeMap.containsKey(id)) {
-            JOptionPane.showMessageDialog(this, "ID not found in employee list");
-            return;
-        }
+
+        //  if (!employeeMap.containsKey(id)) {
+        //    JOptionPane.showMessageDialog(this, "ID not found in employee list");
+        //    return;
+        //  }
+
 
         if (!isValidMilitaryTime(time)) {
             JOptionPane.showMessageDialog(this, "Please enter a valid military time (HH:mm, 00:00–23:59).");
             return;
         }
 
+
         if (!isValidDateFormat(date)) {
             JOptionPane.showMessageDialog(this, "Please enter a valid date format (mm/dd/yyyy).");
             return;
         }
 
-        String name = employeeMap.get(id);
+
+        //  String name = employeeMap.get(id);
+        String name = getEmployeeNameFromFirestore(id); // Get name from Firestore
+        if (name == null) {
+            JOptionPane.showMessageDialog(this, "Employee with ID " + id + " not found.");
+            return;
+        }
+
 
         if (checkInOutButton.getText().equals("Check In")) {
             attendanceModel.addRow(new Object[]{name, date, time, null, null});
+            saveAttendanceToFirestore(name, date, time, null, null, id); // Save to Firestore, include ID
             JOptionPane.showMessageDialog(this, name + " checked in at " + time);
         } else {
             if (selectedRow != -1 &&
                     attendanceModel.getValueAt(selectedRow, 0).equals(name) &&
                     attendanceModel.getValueAt(selectedRow, 1).equals(date)) {
 
+
                 attendanceModel.setValueAt(time, selectedRow, 3);
                 String[] inParts = attendanceModel.getValueAt(selectedRow, 2).toString().split(":");
                 String[] outParts = time.split(":");
 
+
                 int inHour = Integer.parseInt(inParts[0]);
                 int outHour = Integer.parseInt(outParts[0]);
+
 
                 if (outHour < inHour) {
                     dateOut = getNextDate(date); // compute next day
                 }
 
+
                 attendanceModel.setValueAt(time, selectedRow, 3);
                 attendanceModel.setValueAt(dateOut, selectedRow, 4);
+                saveAttendanceToFirestore(name, date, attendanceModel.getValueAt(selectedRow, 2).toString(), time, dateOut, id); // Update Firestore
+
 
                 JOptionPane.showMessageDialog(this, name + " checked out at " + time);
+
 
                 checkInOutButton.setText("Check In");
                 selectedRow = -1;
@@ -143,27 +238,31 @@ public class Attendance extends JFrame {
             }
         }
 
+
         idField.setText("");
         dateField.setText("");
         timeField.setText("");
     }
 
+
     public String getEmployeeIdByName(String name) {
-        for (Map.Entry<String, String> entry : employeeMap.entrySet()) {
-            if (entry.getValue().equals(name)) {
-                return entry.getKey();
+        for (int i = 0; i < attendanceModel.getRowCount(); i++) {
+            String recordName = (String) attendanceModel.getValueAt(i, 0);
+            if (recordName.equals(name)) {
+                return getEmployeeIdFromFirestore(name); // Get ID from Firestore
             }
         }
         return "";
     }
 
+
     public java.util.List<AttendanceRecord> getAttendanceDataById(String id) {
-        String name = employeeMap.get(id);
         java.util.List<AttendanceRecord> records = new java.util.ArrayList<>();
 
+
         for (int i = 0; i < attendanceModel.getRowCount(); i++) {
-            String recordName = (String) attendanceModel.getValueAt(i, 0);
-            if (recordName.equals(name)) {
+            String recordId = getEmployeeIdByName((String) attendanceModel.getValueAt(i, 0));
+            if (recordId.equals(id)) {
                 String date = (String) attendanceModel.getValueAt(i, 1);
                 String timeIn = (String) attendanceModel.getValueAt(i, 2);
                 String timeOut = (String) attendanceModel.getValueAt(i, 3);
@@ -173,6 +272,8 @@ public class Attendance extends JFrame {
         }
         return records;
     }
+
+
     public String getNextDate(String date) {
         try {
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MM/dd/yyyy");
@@ -186,12 +287,45 @@ public class Attendance extends JFrame {
         }
     }
 
+
     public boolean isValidMilitaryTime(String time) {
         return time.matches("([01]\\d|2[0-3]):[0-5]\\d");
     }
+
+
     public boolean isValidDateFormat(String date) {
         return date.matches("(0[1-9]|1[0-2])/([0][1-9]|[12][0-9]|3[01])/\\d{4}");
     }
 
-}
 
+    // Helper methods to get employee name and ID from Firestore
+    private String getEmployeeNameFromFirestore(String employeeId) {
+        try {
+            DocumentSnapshot document = db.collection("employees").document(employeeId).get().get();
+            if (document.exists()) {
+                return document.getString("name");
+            } else {
+                return null;
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+    private String getEmployeeIdFromFirestore(String employeeName) {
+        try {
+            CollectionReference employees = db.collection("employees");
+            com.google.cloud.firestore.QuerySnapshot querySnapshot = employees.whereEqualTo("name", employeeName).get().get();
+            if (!querySnapshot.isEmpty()) {
+                return querySnapshot.getDocuments().get(0).getId(); // Assuming name is unique
+            } else {
+                return null;
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+}

@@ -122,7 +122,7 @@ public class OwnerLiquidationFrame extends JFrame {
         return (base * 0.05) / 2;
     }
 
-    private double computePagIbigContribution(double grossMonthly) {
+    private double computePagIbigContribution(double grossMonthly)   {
         return Math.min(grossMonthly * 0.02, 100);
     }
 }
