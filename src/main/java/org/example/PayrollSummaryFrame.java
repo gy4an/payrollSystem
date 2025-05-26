@@ -27,9 +27,10 @@ public class PayrollSummaryFrame extends JFrame {
 
     public PayrollSummaryFrame(String employeeName, String employeeId, double basicSalary,
                                List<AttendanceRecord> attendanceRecords, List<Employee> allEmployees) {
-        setTitle("Payroll Summary");
-        setSize(600, 400);
-        setLocationRelativeTo(null);
+        this.setTitle("Payroll Summary");
+        this.setSize(600, 400);
+        this.setLocationRelativeTo(null);
+
 
         this.employeeName = employeeName;
         this.employeeId = employeeId;
