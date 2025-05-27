@@ -25,4 +25,6 @@ public class PayslipFrame extends JFrame {
         this.setVisible(true);
     }
 
+
+
 }

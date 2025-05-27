@@ -233,7 +233,7 @@ public class Attendance extends JFrame {
 
         for (int i = 0; i < attendanceModel.getRowCount(); i++) {
             String recordId = getEmployeeIdByName((String) attendanceModel.getValueAt(i, 0));
-            if (recordId.equals(id)) {
+            if (id.equals(recordId)) {
                 String date = (String) attendanceModel.getValueAt(i, 1);
                 String timeIn = (String) attendanceModel.getValueAt(i, 2);
                 String timeOut = (String) attendanceModel.getValueAt(i, 3);
@@ -241,6 +241,7 @@ public class Attendance extends JFrame {
                 records.add(new AttendanceRecord(date, timeIn, timeOut, dateOut));
             }
         }
+
         return records;
     }
 
