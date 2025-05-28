@@ -20,7 +20,7 @@ public class FirebaseUtil {
     public static void initializeFirebase() {
         try {
             if (FirebaseApp.getApps().isEmpty()) {
-                FileInputStream serviceAccount = new FileInputStream("src/main/java/org/example/payrollsystemdb-firebase-adminsdk-fbsvc-263b91294b.json"); // Replace with your path
+                FileInputStream serviceAccount = new FileInputStream("src/main/java/org/example/payrollsystemdb-firebase-adminsdk-fbsvc-66bd24bc8a.json"); // Replace with your path
                 FirebaseOptions options = new FirebaseOptions.Builder()
                         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                         .build();

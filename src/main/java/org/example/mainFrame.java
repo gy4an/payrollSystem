@@ -125,6 +125,11 @@ public class mainFrame extends JFrame {
             String position = positionTextField.getText().trim();
             double salary = Double.parseDouble(salaryTextField.getText().trim());
 
+            if (salary < 0) {
+                JOptionPane.showMessageDialog(this, "Salary cannot be negative.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             Employee employee = new Employee(id, name, position, salary);
             db.collection(EMPLOYEES_COLLECTION).document(id).set(employee).get();
             clearFields();
